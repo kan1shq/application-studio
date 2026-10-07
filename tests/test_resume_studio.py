@@ -112,7 +112,23 @@ class ResumeHTTPTests(unittest.TestCase):
             try:
                 self.assertIsNone(request('/api/resume/profile')['profile'])
                 request('/api/resume/profile',{'profile':profile()})
-                self.assertIn('resume_tex',request('/api/resume/generate',{'job_id':j['id']}))
+                generated=request('/api/resume/generate',{'job_id':j['id']})
+                self.assertIn('resume_tex',generated)
+                pdf_body=dict(generated['pdf_request'],kind='resume')
+                with patch.object(studio,'compile_pdf',return_value=b'%PDF-1.7\nfixture') as compile_mock:
+                    req=Request(f'http://127.0.0.1:{http.server_port}/api/resume/pdf',data=json.dumps(pdf_body).encode(),headers={'Content-Type':'application/json'})
+                    with urlopen(req) as response:
+                        self.assertEqual(response.headers['Content-Type'],'application/pdf')
+                        self.assertIn('resume.pdf',response.headers['Content-Disposition'])
+                        self.assertTrue(response.read().startswith(b'%PDF-'))
+                    self.assertEqual(compile_mock.call_args.args[0],generated['resume_tex'])
+                with patch.object(studio,'compile_pdf',side_effect=RuntimeError('Compiler unavailable')):
+                    with self.assertRaises(HTTPError) as e:request('/api/resume/pdf',pdf_body)
+                    self.assertEqual(e.exception.code,503);e.exception.close()
+                with self.assertRaises(HTTPError) as e:request('/api/resume/pdf',dict(pdf_body,profile_hash='stale'))
+                self.assertEqual(e.exception.code,409);e.exception.close()
+                with self.assertRaises(HTTPError) as e:request('/api/resume/pdf',dict(pdf_body,kind='../file'))
+                self.assertEqual(e.exception.code,400);e.exception.close()
                 self.assertEqual(request('/api/resume/gaps')['jobs_scanned'],1)
                 request('/api/resume/jd',{'job_id':j['id'],'full_description':j['full_description']+' Updated.'})
                 for body in ({'job_id':'missing'},{'job_id':j['id'],'max_bullets':True}):

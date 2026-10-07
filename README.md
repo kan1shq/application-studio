@@ -86,3 +86,10 @@ python tools/build_curriculum.py --check
 Node is needed only for frontend contract tests. Tests use temporary databases and fictional fixtures. They cover metric/qualifier preservation, source association, LaTeX escaping, missing-JD rejection, profile edits, gap filters, HTTP routes, job persistence, and learning workflows. Visual PDF inspection remains a separate release check.
 
 Template attribution and MIT notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Optional `contact_links` maps displayed contact labels to HTTP(S)/mailto URLs, and each entry can provide an `emphasis` list of exact source phrases to bold without changing wording.
+
+
+## Direct PDF downloads
+
+After generating drafts, click **Download resume PDF** or **Download cover letter PDF**. The server compiles the saved profile/JD locally and returns a PDF attachment. If the profile or JD changed since the preview, regenerate first. LaTeX downloads remain available.
+
+PDF compilation requires Tectonic or pdfLaTeX (TeX Live/MiKTeX) on PATH. Alternatively, set `TECTONIC_PATH` to the Tectonic executable before starting the server. A portable Windows installation at `.runtime/tectonic/tectonic.exe` is also detected. Compiler binaries are not bundled in the public repository. Compilation uses temporary files, disables shell execution, limits runtime, and does not accept raw LaTeX from HTTP clients. First use may download LaTeX packages.

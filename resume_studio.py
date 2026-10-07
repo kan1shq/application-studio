@@ -4,9 +4,42 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import os
+import shutil
+import subprocess
+import tempfile
+import threading
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
+
+PDF_LOCK=threading.Lock()
+
+
+def compile_pdf(source):
+    """Compile server-generated, escaped LaTeX; never accept raw client TeX."""
+    root=Path(__file__).resolve().parent
+    tectonic=os.environ.get('TECTONIC_PATH') or shutil.which('tectonic')
+    bundled=root/'.runtime/tectonic/tectonic.exe'
+    if not tectonic and bundled.is_file():tectonic=str(bundled)
+    pdflatex=shutil.which('pdflatex') if not tectonic else None
+    if not tectonic and not pdflatex:
+        raise RuntimeError('PDF compiler unavailable. Install Tectonic or TeX Live/MiKTeX, or set TECTONIC_PATH, then restart the server. LaTeX downloads remain available.')
+    if not PDF_LOCK.acquire(blocking=False):raise RuntimeError('Another PDF is compiling. Please retry shortly.')
+    try:
+        with tempfile.TemporaryDirectory(prefix='application-studio-pdf-') as directory:
+            path=Path(directory);(path/'document.tex').write_text(source,encoding='utf-8')
+            command=[tectonic,'-X','compile','document.tex','--untrusted'] if tectonic else [pdflatex,'-no-shell-escape','-interaction=nonstopmode','-halt-on-error','document.tex']
+            try:
+                result=subprocess.run(command,cwd=path,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=120,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+            except subprocess.TimeoutExpired as exc:raise RuntimeError('PDF compilation timed out. Retry after LaTeX packages finish downloading, or compile the .tex locally.') from exc
+            except OSError as exc:raise RuntimeError('Could not launch the PDF compiler. Check the configured compiler path.') from exc
+            pdf=path/'document.pdf'
+            if result.returncode or not pdf.exists():raise RuntimeError('LaTeX could not compile this draft. Download the .tex to inspect it; check the compiler installation and package access.')
+            content=pdf.read_bytes()
+            if not content.startswith(b'%PDF-'):raise RuntimeError('Compiler did not produce a valid PDF file.')
+            return content
+    finally:PDF_LOCK.release()
 
 # Separate skills deliberately: Java is not JavaScript, SQL is not PostgreSQL,
 # and Azure experience does not imply AWS experience.

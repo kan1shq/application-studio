@@ -224,7 +224,7 @@ class Handler(SimpleHTTPRequestHandler):
             if not isinstance(body,dict): raise ValueError('JSON object required')
             if self.path=='/api/resume/profile':
                 return self.send_json({'profile':resume_studio.save_profile(DATA,body.get('profile'))})
-            if self.path in ('/api/resume/generate','/api/resume/jd'):
+            if self.path in ('/api/resume/generate','/api/resume/jd','/api/resume/pdf'):
                 jid=body.get('job_id')
                 if not isinstance(jid,str): raise ValueError('Select a saved job')
                 with connect() as db:
@@ -239,7 +239,17 @@ class Handler(SimpleHTTPRequestHandler):
                         return self.send_json({'saved':True})
                 profile=resume_studio.load_profile(DATA)
                 if not profile: raise ValueError('Save your full resume profile first')
-                return self.send_json(resume_studio.generate(profile,job,body.get('max_bullets',4)))
+                draft=resume_studio.generate(profile,job,body.get('max_bullets',4))
+                if self.path=='/api/resume/pdf':
+                    kind=body.get('kind')
+                    if kind not in ('resume','cover_letter'):raise ValueError('Choose resume or cover_letter')
+                    if any(body.get(k)!=draft['audit'][k] for k in ('profile_hash','jd_hash')):
+                        return self.send_json({'error':'Your profile or JD changed. Generate the drafts again before downloading PDFs.'},409)
+                    try:content=resume_studio.compile_pdf(draft[kind+'_tex'])
+                    except RuntimeError as exc:return self.send_json({'error':str(exc)},503)
+                    self.send_response(200);self.send_header('Content-Type','application/pdf');self.send_header('Content-Disposition','attachment; filename="'+kind.replace('_','-')+'.pdf"');self.send_header('Cache-Control','no-store');self.send_header('Content-Length',str(len(content)));self.end_headers();return self.wfile.write(content)
+                draft['pdf_request']={'job_id':jid,'max_bullets':body.get('max_bullets',4),'profile_hash':draft['audit']['profile_hash'],'jd_hash':draft['audit']['jd_hash']}
+                return self.send_json(draft)
             learning_routes={'/api/learning/state':learning_store.save_state,'/api/learning/attempt':learning_store.attempt}
             curriculum_routes={'/api/curriculum/import':learning_store.import_snapshot,'/api/curriculum/refresh':learning_store.refresh,'/api/curriculum/adopt':learning_store.adopt}
             if self.path in learning_routes:
