@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "name": "Alex Example",
+  "contacts": [
+    "alex@example.com"
+  ],
+  "source_label": "Fictional example; replace every fact",
+  "full_details": "",
+  "sections": [
+    {
+      "title": "Education",
+      "kind": "education",
+      "entries": [
+        {
+          "title": "Example University",
+          "subtitle": "Degree in Computing",
+          "dates": "2018 - 2022",
+          "location": "Example City",
+          "bullets": []
+        }
+      ]
+    },
+    {
+      "title": "Experience",
+      "kind": "experience",
+      "entries": [
+        {
+          "title": "Software Engineer | Python",
+          "subtitle": "Fictional Company",
+          "dates": "2022 - 2024",
+          "location": "Example City",
+          "bullets": [
+            "Built Python APIs for an internal document workflow."
+          ],
+          "groups": [
+            {
+              "heading": "Event processing",
+              "bullets": [
+                "Built a Kafka consumer and packaged it with Docker."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Projects",
+      "kind": "projects",
+      "entries": [
+        {
+          "title": "Demo monitoring project",
+          "dates": "2024",
+          "bullets": [
+            "Implemented monitoring for a personal Python service."
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Technical Skills",
+      "kind": "skills",
+      "entries": [
+        {
+          "title": "Languages and tools",
+          "subtitle": "Python, Kafka, Docker",
+          "bullets": []
+        }
+      ]
+    }
+  ]
+}

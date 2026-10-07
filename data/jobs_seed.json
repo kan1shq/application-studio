@@ -1,0 +1,26 @@
+{
+  "note": "Fictional demonstration only.",
+  "jobs": [
+    {
+      "id": "demo:backend",
+      "source_id": "demo",
+      "company": "Example Labs (fictional)",
+      "title": "Backend Engineer",
+      "location": "Demo location",
+      "country": "Example",
+      "region": "Other",
+      "location_rank": 9,
+      "role_track": "Backend",
+      "status_source": "demo",
+      "reviewed": false,
+      "fit_band": "Needs review",
+      "requirements": "Python, Kafka, Docker, PostgreSQL",
+      "description": "Fictional example; replace with a real JD.",
+      "full_description": "Fictional demonstration only. Build Python APIs and Kafka event processing services. Package applications with Docker and use PostgreSQL. Discuss testing, monitoring, and deployment. No real vacancy is advertised.",
+      "apply_url": "https://example.com",
+      "source_url": "https://example.com",
+      "salary_text": "Not specified",
+      "visa_text": "Not specified"
+    }
+  ]
+}
